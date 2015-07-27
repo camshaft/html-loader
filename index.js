@@ -16,7 +16,7 @@ function randomIdent() {
 module.exports = function(content) {
 	this.cacheable && this.cacheable();
 	var query = loaderUtils.parseQuery(this.query);
-	var attributes = ["img:src"];
+	var attributes = ["img:src", "*:style"];
 	if(query.attrs !== undefined) {
 		if(typeof query.attrs === "string")
 			attributes = query.attrs.split(" ");
@@ -29,22 +29,23 @@ module.exports = function(content) {
 	}
 	var root = query.root;
 	var links = attrParse(content, function(tag, attr) {
-		return attributes.indexOf(tag + ":" + attr) >= 0;
+		return attributes.indexOf(tag + ":" + attr) >= 0 || attributes.indexOf("*:" + attr) >= 0;
+	}).sort(function(a, b) {
+		if (a.start === b.start) return 0;
+		return a.start > b.start ? -1 : 1;
 	});
-	links.reverse();
 	var data = {};
 	content = [content];
 	links.forEach(function(link) {
 		if(!loaderUtils.isUrlRequest(link.value, root)) return;
-        
+
 		var uri = url.parse(link.value);
 		if (uri.hash !== null && uri.hash !== undefined) {
-		    uri.hash = null;
-		    link.value = uri.format();
-		    link.length = link.value.length;
+				uri.hash = null;
+				link.value = uri.format();
+				link.length = link.value.length;
 		}
 
-        
 		do {
 			var ident = randomIdent();
 		} while(data[ident]);
